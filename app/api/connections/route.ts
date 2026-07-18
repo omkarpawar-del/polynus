@@ -1,0 +1,4 @@
+import { NextResponse } from 'next/server'; import { z } from 'zod'; import { requireUser } from '@/lib/auth';
+const body=z.object({provider:z.enum(['openai','gemini','claude'])});
+export async function POST(request:Request){try{const {supabase,user}=await requireUser(); const {provider}=body.parse(await request.json()); const {error}=await supabase.from('connections').upsert({user_id:user.id,provider,provider_user_id:'demo-import',last_synced_at:new Date().toISOString()},{onConflict:'user_id,provider'}); if(error) throw error; return NextResponse.json({ok:true});}catch(e){return NextResponse.json({error:e instanceof Error?e.message:'Bad request'},{status:401});}}
+export async function GET(){try{const {supabase}=await requireUser(); const {data,error}=await supabase.from('connections').select('provider,connected_at,last_synced_at'); if(error)throw error; return NextResponse.json(data);}catch{return NextResponse.json({error:'Unauthorized'},{status:401});}}
