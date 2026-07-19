@@ -22,7 +22,10 @@ export default function Dashboard() {
   const load = () => fetch('/api/dashboard').then(r => r.json()).then(setData);
   useEffect(() => { load(); }, []);
   const sync = async () => { setLoading(true); await fetch('/api/sync', { method: 'POST' }); await load(); setLoading(false); };
-  const cards = data?.cards ?? [];
+  const cards = useMemo(() => (data?.cards ?? []).map(card => ({
+    ...card,
+    tasks: card.tasks.filter((task, index, list) => list.findIndex(candidate => candidate.title === task.title && candidate.source_provider === task.source_provider) === index),
+  })), [data]);
   const priorities = cards.flatMap(card => card.tasks.map(task => ({ ...task, mode: card.mode }))).slice(0, 4);
   const totalTasks = priorities.length;
   const priorityLabel = totalTasks === 1 ? 'priority' : 'priorities';
